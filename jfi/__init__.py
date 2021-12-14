@@ -81,6 +81,7 @@ def init(device=None, dtype=None, seed=None):
 
     # module bindings
     jaxm.jax = jax
+    jaxm.numpy = numpy
     jaxm.lax = jax.lax
     jaxm.xla = jax.xla
     jaxm.scipy = jsp
