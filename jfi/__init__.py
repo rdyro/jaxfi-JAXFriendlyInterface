@@ -16,7 +16,7 @@ def manual_seed(val):
 def init(device=None, dtype=None, seed=None):
     if dtype is not None:
         os.environ["JAX_ENABLE_X64"] = str(
-            dtype == np.float64 or dtype == float
+            dtype == np.float64 or dtype == float or dtype == "float64"
         )
     if device is not None:
         if isinstance(device, str) and (
