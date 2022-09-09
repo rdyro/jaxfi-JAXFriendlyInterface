@@ -1,5 +1,5 @@
-import math, pdb, os, sys, time
-from functools import partial
+import os
+import time
 
 import numpy as np
 
@@ -16,15 +16,16 @@ def manual_seed(val):
 def init(device=None, dtype=None, seed=None):
     if dtype is not None:
         os.environ["JAX_ENABLE_X64"] = str(
-            dtype == np.float64 or dtype == float or dtype == "float64"
+            dtype == np.float64 or dtype == float or dtype == "float64" or dtype == "double"
         )
     if device is not None:
-        if isinstance(device, str) and (
-            device.lower() == "cuda" or device.lower() == "gpu"
-        ):
+        if isinstance(device, str) and (device.lower() == "cuda" or device.lower() == "gpu"):
             os.environ["JAX_PLATFORM_NAME"] = "GPU"
             os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = str(False)
             os.environ["XLA_PYTHON_CLIENT_ALLOCATOR"] = "platform"
+            if dtype is None:
+                # enable float32 on gpu by default
+                os.environ["JAX_ENABLE_X64"] = "False"
         else:
             os.environ["JAX_PLATFORM_NAME"] = "CPU"
             keys = [
@@ -34,9 +35,15 @@ def init(device=None, dtype=None, seed=None):
             for k in keys:
                 if k in os.environ:
                     del os.environ[k]
+            if dtype is None:
+                # enable float64 on gpu by default
+                os.environ["JAX_ENABLE_X64"] = "True"
 
     global jax, jnp, jsp, jrandom
-    import jax, jax.numpy as jnp, jax.scipy as jsp, jax.random as jrandom
+    import jax
+    import jax.numpy as jnp
+    import jax.random as jrandom
+    import jax.scipy as jsp
 
     # binding main derivatives and jit
     jaxm = jnp
@@ -61,9 +68,7 @@ def init(device=None, dtype=None, seed=None):
 
     jaxm.randn = random_fn(jrandom.normal)
     jaxm.rand = random_fn(jrandom.uniform)
-    jaxm.randint = random_fn(
-        lambda key, low, high, size: jrandom.randint(key, size, low, high)
-    )
+    jaxm.randint = random_fn(lambda key, low, high, size: jrandom.randint(key, size, low, high))
 
     # LA factorizations and solves
     jaxm.linalg.cholesky = jsp.linalg.cho_factor
@@ -94,5 +99,3 @@ if __name__ == "__main__":
     load_jax(device="cpu", dtype=np.float32)
     d = jax.randn((10,))
     print(d.dtype, d.device())
-
-    pdb.set_trace()
