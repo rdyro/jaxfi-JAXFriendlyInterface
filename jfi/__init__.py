@@ -51,6 +51,7 @@ def init(device=None, dtype=None, seed=None):
     jaxm.jvp, jaxm.vjp = jax.jvp, jax.vjp
     jaxm.hessian = jax.hessian
     jaxm.jit = jax.jit
+    jaxm.vmap = jax.vmap
 
     # binding random numbers
     global key
@@ -65,6 +66,12 @@ def init(device=None, dtype=None, seed=None):
             return ret
 
         return jaxm_fn
+
+    def make_random_keys(n):
+        global key
+        keys = jrandom.split(key, n + 1)
+        key = keys[-1]
+        return keys[:-1]
 
     jaxm.randn = random_fn(jrandom.normal)
     jaxm.rand = random_fn(jrandom.uniform)
@@ -83,6 +90,7 @@ def init(device=None, dtype=None, seed=None):
     jaxm.t = lambda x: jaxm.swapaxes(x, -1, -2)
     jaxm.nn = jax.nn
     jaxm.manual_seed = manual_seed
+    jaxm.make_random_keys = make_random_keys
 
     # module bindings
     jaxm.jax = jax
