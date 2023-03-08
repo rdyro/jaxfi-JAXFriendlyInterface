@@ -13,6 +13,18 @@ jaxm.cat === torch.cat
 jaxm.manual_seed === torch.manual_seed
 ```
 
+**Make sure to import this module before anything that might import `jax` (e.g., `jaxopt`).**
+
+```python
+# DO 
+from jfi import jaxm
+import jaxopt
+
+# DON'T!!!
+import jaxopt
+from jfi import jaxm
+```
+
 Placing arrays on GPU and CPU is easy, either specify device/dtype directly or
 use `jaxm.to` to move the array to a specific device/dtype.
 ```python
