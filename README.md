@@ -1,15 +1,11 @@
 # jfi - JAXFriendlyInterface
 Friendly Interface to JAX.
 
+**News: Better, improved interface! `from jfi import jaxm` is all you need!**
+
 Creates a JAX-like module that behaves very similarly to PyTorch, so
 ```
-# only works correctly if it is the first jax import in the program
->>> import jfi
->>> jaxm = jfi.init(dtype="float32", device="cpu") 
-
-# these are also supported
->>> jaxm = jfi.init(dtype=np.float64, device="cpu") 
->>> jaxm = jfi.init(dtype=float, device="cuda") # float64
+>>> from jfi import jaxm
 
 jaxm.norm === torch.norm
 jaxm.rand === torch.rand
