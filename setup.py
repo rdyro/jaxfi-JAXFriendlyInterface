@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name="jfi",
-    version="0.3.0",
+    version="0.3.1",
     author="Robert Dyro",
     description=("Simplified and user friendly interface to JAX."),
     license="MIT",
