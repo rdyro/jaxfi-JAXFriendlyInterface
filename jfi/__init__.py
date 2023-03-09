@@ -3,6 +3,7 @@ import re
 import time
 import hashlib
 import pickle
+from functools import partial
 from typing import Tuple, Any, Optional
 from subprocess import check_output
 
@@ -11,6 +12,17 @@ from subprocess import check_output
 jaxm = None
 jax, jnp, jsp, jrandom = None, None, None, None
 DEFAULT_DEVICE, DEFAULT_DTYPE = None, None
+
+####################################################################################################
+
+def make_random_keys(n):
+    global key, jrandom
+    keys = jrandom.split(key, n + 1)
+    key = keys[-1]
+    return keys[:-1]
+
+def make_random_key():
+    return make_random_keys(1)[0]
 
 ####################################################################################################
 
@@ -28,19 +40,8 @@ def _resolve_dtype(dtype):
     global jnp
     return jnp.dtype(dtype)
 
-
-def _default_dtype_for_device(device):
-    """Convert a device to its default dtype (global dtype for CPU, float32 for GPU)."""
-    global jnp
-    device = _resolve_device(device)
-    if re.search("cpu", device.device_kind) is not None:
-        return DEFAULT_DTYPE
-    else:
-        return jnp.float32
-
-
 def _jaxm_to(
-    x: "Array", # noqa: F821
+    x: "Array",  # noqa: F821
     device_or_dtype: Optional[Tuple[str, Any]] = None,
     device: Optional[Tuple[str, Any]] = None,
     dtype: Optional[Tuple[str, Any]] = None,
@@ -61,7 +62,7 @@ def _jaxm_to(
             return jax.device_put(x, _resolve_device(device)).astype(_resolve_dtype(dtype))
         if device is not None and dtype is None:
             return jax.device_put(x, _resolve_device(device)).astype(
-                _default_dtype_for_device(device)
+                default_dtype_for_device(device)
             )
         elif device is None and dtype is not None:
             return x.astype(_resolve_dtype(dtype))
@@ -70,6 +71,15 @@ def _jaxm_to(
 
 
 ####################################################################################################
+
+def default_dtype_for_device(device):
+    """Convert a device to its default dtype (global dtype for CPU, float32 for GPU)."""
+    global jnp
+    device = _resolve_device(device)
+    if re.search("cpu", device.device_kind) is not None:
+        return DEFAULT_DTYPE
+    else:
+        return jnp.float32
 
 
 def get_default_dtype():
@@ -144,12 +154,13 @@ def init(seed=None):
     )
     key = jrandom.PRNGKey(seed)
 
-    def device_dtype_fn(fn):
+    def device_dtype_fn(fn, without_dtype=False):
         def fn_(*args, **kw):
             device = _resolve_device(kw.get("device", DEFAULT_DEVICE))
             if "device" in kw:
                 del kw["device"]
-            kw["dtype"] = kw.get("dtype", _default_dtype_for_device(device))
+            if not without_dtype:
+                kw["dtype"] = kw.get("dtype", default_dtype_for_device(device))
             return jax.device_put(fn(*args, **kw), device)
 
         return fn_
@@ -158,34 +169,41 @@ def init(seed=None):
     jaxm.zeros = device_dtype_fn(jnp.zeros)
     jaxm.full = device_dtype_fn(jnp.full)
     jaxm.eye = device_dtype_fn(jnp.eye)
+    jaxm.arange = device_dtype_fn(jnp.arange, without_dtype=True)
+    jaxm.linspace = device_dtype_fn(jnp.linspace)
+    jaxm.logspace = device_dtype_fn(jnp.logspace)
 
     def random_fn(fn, first_arg_to_tuple=False):
         def jaxm_fn(*args, **kw):
             global key
-            key1, key2 = jrandom.split(key)
+            if "key" in kw and kw["key"] is None:
+                kw = {k: v for (k, v) in kw.items() if k != "key"}
+            if "key" in kw:
+                key1 = kw["key"]  # use user provided key
+                kw = {k: v for (k, v) in kw.items() if k != "key"}
+            else:
+                key1, key2 = jrandom.split(key)
+                if not isinstance(key2, jax.interpreters.partial_eval.DynamicJaxprTracer):
+                    key = key2
             # set correct device and dtype
             device = _resolve_device(kw.get("device", DEFAULT_DEVICE))
             if "device" in kw:
                 del kw["device"]
-            kw["dtype"] = kw.get("dtype", _default_dtype_for_device(device))
+            kw["dtype"] = kw.get("dtype", default_dtype_for_device(device))
             # make the size a tuple if this is the only positional argument
             if first_arg_to_tuple and len(args) == 1 and not hasattr(args[0], "__iter__"):
                 args = [(args[0],)] + list(args)[1:]
             ret = jax.device_put(fn(key1, *args, **kw), device)
-            key = key2
             return ret
 
         return jaxm_fn
 
-    def make_random_keys(n):
-        global key
-        keys = jrandom.split(key, n + 1)
-        key = keys[-1]
-        return keys[:-1]
-
     jaxm.randn = random_fn(jrandom.normal, first_arg_to_tuple=True)
     jaxm.rand = random_fn(jrandom.uniform, first_arg_to_tuple=True)
     jaxm.randint = random_fn(lambda key, low, high, size: jrandom.randint(key, size, low, high))
+
+    #def make_random_keys(n):
+    #    return jax.pure_callback(_make_random_keys, jax.ShapedArray((n, 2), jnp.uint32), n)
 
     # LA factorizations and solves
     jaxm.linalg.cholesky = jsp.linalg.cho_factor
@@ -204,6 +222,7 @@ def init(seed=None):
     jaxm.set_default_dtype = set_default_dtype
     jaxm.get_default_device = get_default_device
     jaxm.set_default_device = set_default_device
+    jaxm.default_dtype_for_device = default_dtype_for_device
     jaxm.make_random_keys = make_random_keys
     jaxm.to = _jaxm_to
 
