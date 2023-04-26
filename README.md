@@ -72,11 +72,7 @@ Finally, jax-backed modules are available directly in jaxm
 >>> jaxm.random
 >>> jaxm.scipy
 >>> jaxm.lax
->>> jaxm.xla
 ```
-
-Additional references can be found in the source code of this module which
-consists of 1 file.
 
 # 🔪 The Sharp Bits 🔪
 
