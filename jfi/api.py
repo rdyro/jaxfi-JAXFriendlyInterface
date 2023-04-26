@@ -35,11 +35,9 @@ def init(seed=None):
     # binding main derivatives and jit
     jaxm = copy_module(jnp)
 
-    jaxm.grad, jaxm.jacobian = jax.grad, jax.jacobian
-    jaxm.jvp, jaxm.vjp = jax.jvp, jax.vjp
-    jaxm.hessian = jax.hessian
-    jaxm.jit = jax.jit
-    jaxm.vmap = jax.vmap
+    jaxm.grad, jaxm.jacobian, jaxm.hessian = jax.grad, jax.jacobian, jax.hessian
+    jaxm.jvp, jaxm.vjp, jaxm.stop_gradient = jax.jvp, jax.vjp, jax.lax.stop_gradient
+    jaxm.jit, jaxm.vmap = jax.jit, jax.vmap
 
     DEFAULT_DEVICE, DEFAULT_DTYPE = jax.devices("cpu")[0], jnp.float64
     globals.DEFAULT_DEVICE, globals.DEFAULT_DTYPE = DEFAULT_DEVICE, DEFAULT_DTYPE
@@ -132,6 +130,12 @@ def init(seed=None):
     jaxm.default_dtype_for_device = default_dtype_for_device
     jaxm.make_random_keys = make_random_keys
     jaxm.to = _tree_jaxm_to
+
+    # some control flow bindings
+    jaxm.cond = jax.lax.cond
+    jaxm.scan = jax.lax.scan
+    jaxm.while_loop = jax.lax.while_loop
+    jaxm.fori_loop = jax.lax.fori_loop
 
     # module bindings
     jaxm.jax = jax
