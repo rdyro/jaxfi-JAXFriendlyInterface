@@ -2,6 +2,13 @@
 
 Friendly Interface to JAX.
 
+- [jfi (JAX Friendly Interface) - JAX with a PyTorch-like interface](#jfi-jax-friendly-interface---jax-with-a-pytorch-like-interface)
+- [Working with CPU and GPU](#working-with-cpu-and-gpu)
+- [JAX modules are accessible directly](#jax-modules-are-accessible-directly)
+- [🔪 The Sharp Bits 🔪](#-the-sharp-bits-)
+- [Notes](#notes)
+- [Installation](#installation)
+
 **News: Better, improved interface! `from jfi import jaxm` is all you need!**
 
 Creates a JAX-like module that behaves very similarly to PyTorch, so
@@ -13,6 +20,7 @@ jaxm.rand === torch.rand
 jaxm.cat === torch.cat
 jaxm.manual_seed === torch.manual_seed
 ```
+
 
 **Make sure to import this module before anything that might import `jax` (e.g., `jaxopt`).**
 
@@ -105,3 +113,11 @@ f(1, jaxm.make_random_key()) # [-2.58426713,  0.90726101,  2.1546499 ]
 
 I'm not affiliated with [JAX](https://github.com/google/jax) or
 [PyTorch](https://pytorch.org/) in any way.
+
+# Installation
+
+To install, issue
+```bash
+pip install .
+```
+from the project root.
