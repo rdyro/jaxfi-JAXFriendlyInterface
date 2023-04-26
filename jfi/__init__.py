@@ -114,6 +114,33 @@ def _tree_jaxm_to(
 ####################################################################################################
 
 
+def _make_jax_device(platform: str, id: int):
+    import jax
+
+    return jax.devices(platform)[id]
+
+
+def _pickle_device(d):
+    return _make_jax_device, (d.platform, d.id)
+
+def _make_jax_array(arr_value, device): 
+    import jax
+    return jax.device_put(arr_value, device=device)
+
+def _pickle_array(arr):
+    return _make_jax_array, (np.array(arr), arr.device())
+
+
+def _enable_pickling_fixes():
+    import jaxlib
+
+    copyreg.pickle(jaxlib.xla_extension.Device, _pickle_device)
+    copyreg.pickle(jaxlib.xla_extension.ArrayImpl, _pickle_array)
+
+
+####################################################################################################
+
+
 def default_dtype_for_device(device):
     """Convert a device to its default dtype (global dtype for CPU, float32 for GPU)."""
     global jnp
@@ -283,32 +310,9 @@ def init(seed=None):
     jaxm.scipy = jsp
     jaxm.random = jrandom
 
+    _enable_pickling_fixes()
     return jaxm
 
 
 ####################################################################################################
-
-
-def enable_pickling_fixes():
-    global jax
-
-    def make_jax_device(platform: str, id: int):
-        return jax.devices(platform)[id]
-
-    def pickle_device(d):
-        return make_jax_device, (d.platform, d.id)
-
-    def pickle_array(arr):
-        make_array = lambda arr_value, device: jax.device_put(arr_value, device=device)
-        return make_array, (np.array(arr), arr.device())
-
-    import jaxlib
-
-    copyreg.pickle(jaxlib.xla_extension.Device, pickle_device)
-    copyreg.pickle(jaxlib.xla_extension.ArrayImpl, pickle_array)
-
-
-####################################################################################################
-
-enable_pickling_fixes()
 jaxm = init()
