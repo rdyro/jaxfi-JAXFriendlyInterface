@@ -15,15 +15,16 @@ from .utils import _tree_jaxm_to
 def init(seed=None):
     """Initializes the wrapped jax backend setting the platform (e.g., GPU) and random seed."""
 
-    os.environ["JAX_ENABLE_X64"] = "True"
-    os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = str(False)
-    os.environ["XLA_PYTHON_CLIENT_ALLOCATOR"] = "platform"
-    try:
-        check_output("nvidia-smi")
-        gpu_available = True
-    except FileNotFoundError:
-        gpu_available = False
-    os.environ["JAX_PLATFORM_NAME"] = "GPU" if gpu_available else "CPU"
+    os.environ.setdefault("JAX_ENABLE_X64", "True")
+    os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", str(False))
+    os.environ.setdefault("XLA_PYTHON_CLIENT_ALLOCATOR", "platform")
+    if os.environ.get("JAX_PLATFORM_NAME") is None:
+        try:
+            check_output("nvidia-smi")
+            gpu_available = True
+        except FileNotFoundError:
+            gpu_available = False
+        os.environ["JAX_PLATFORM_NAME"] = "GPU" if gpu_available else "CPU"
 
     import jax
     import jax.numpy as jnp
@@ -33,7 +34,10 @@ def init(seed=None):
     globals.jax, globals.jnp, globals.jrandom, globals.jsp = jax, jnp, jrandom, jsp 
 
     # binding main derivatives and jit
-    jaxm = copy_module(jnp)
+    if int(os.environ.get("JFI_COPY_NUMPY", 1)):
+        jaxm = copy_module(jnp)
+    else:
+        jaxm = jnp
 
     jaxm.grad, jaxm.jacobian, jaxm.hessian = jax.grad, jax.jacobian, jax.hessian
     jaxm.jvp, jaxm.vjp, jaxm.stop_gradient = jax.jvp, jax.vjp, jax.lax.stop_gradient
@@ -43,6 +47,7 @@ def init(seed=None):
     globals.DEFAULT_DEVICE, globals.DEFAULT_DTYPE = DEFAULT_DEVICE, DEFAULT_DTYPE
 
     # binding random numbers
+    seed = None
     seed = (
         seed
         if seed is not None
@@ -128,7 +133,9 @@ def init(seed=None):
     jaxm.get_default_device = get_default_device
     jaxm.set_default_device = set_default_device
     jaxm.default_dtype_for_device = default_dtype_for_device
+    jaxm.resolve_device = resolve_device
     jaxm.make_random_keys = make_random_keys
+    jaxm.make_random_key = make_random_key
     jaxm.to = _tree_jaxm_to
 
     # some control flow bindings

@@ -123,6 +123,83 @@ def wrap_torch_fn(
     return wrapped_fn
 
 
+
+def create_custom_vjp(
+    torch_fn: Callable,
+    *args,
+    dtype: "DtypeT" = None,
+    device: "DeviceT" = None,
+    depth: int = 1,
+    create_jvp: bool = False,
+    nondiff_argnums: Optional[tuple] = None,
+    has_aux: bool = False,
+) -> Callable:
+    """_summary_
+
+    Args:
+        torch_fn (Callable): Function in Torch.
+        dtype (DtypeT, optional): JAX dtype. Defaults to None.
+        device (DeviceT, optional): JAX device. Defaults to None.
+        depth (int, optional): Number of recursive backwards derivatives to define. Defaults to 1.
+        create_jvp (bool, optional): Whether to also create a jvp; not supported currently.
+
+    Raises:
+        ValueError: Raises an error if user requests a jvp because JAX doesn't currently support it.
+
+    Returns:
+        Callable: A JAX function with a (recursively) defined custom_vjp.
+    """
+
+    jdtype = jaxm.dtype(dtype)
+    outputs = torch_fn(*args)
+    output_shape = tu.tree_map(lambda x: ShapeDtypeStruct(x.shape, dtype=jdtype), outputs)
+
+    def fn(*args):
+        return wrap_torch_fn(torch_fn, shape=output_shape, dtype=dtype, device=device)(*args)
+
+    if depth <= 0:
+        return fn
+
+    fn = jaxm.jax.custom_vjp(fn)
+
+    def fwd_fn(*args):
+        return fn(*args), args
+
+    def bwd_fn_torch(args, gs):
+        if nondiff_argnums is None:
+            _, vjp_fn = torch.func.vjp(torch_fn, *args, )
+            return vjp_fn(gs)
+
+        def torch_fn_(*diff_args):
+            all_args, k = [], 0
+            for i, arg in enumerate(args):
+                if i in nondiff_argnums:
+                    all_args.append(arg)
+                else:
+                    all_args.append(diff_args[k])
+                    k += 1
+            return torch_fn(*all_args)
+
+        diff_args = [arg for (i, arg) in enumerate(args) if i not in nondiff_argnums]
+        _, vjp_fn = torch.func.vjp(torch_fn_, *args)
+        return vjp_fn(gs, *diff_args)
+
+
+    if create_jvp:
+        raise ValueError("This is currently not supported by JAX")
+        bwd_fn = create_custom_jvp(bwd_fn_torch, args, outputs, dtype=dtype, device=device, depth=1)
+    else:
+        bwd_fn = create_custom_vjp(
+            bwd_fn_torch, args, outputs, dtype=dtype, device=device, depth=depth - 1
+        )
+        fn.defvjp(fwd_fn, bwd_fn)
+
+    return fn
+
+# incomplete below #################################################################################
+# incomplete below #################################################################################
+# incomplete below #################################################################################
+
 def create_custom_jvp(
     torch_fn: Callable, *args, dtype: "DtypeT" = None, device: "DeviceT" = None
 ) -> Callable:
@@ -158,59 +235,4 @@ def create_custom_jvp(
 
     fn = jaxm.jax.custom_jvp(fn)
     fn.defjvp(f_jvp)
-    return fn
-
-
-def create_custom_vjp(
-    torch_fn: Callable,
-    *args,
-    dtype: "DtypeT" = None,
-    device: "DeviceT" = None,
-    depth: int = 1,
-    create_jvp: bool = False,
-) -> Callable:
-    """_summary_
-
-    Args:
-        torch_fn (Callable): Function in Torch.
-        dtype (DtypeT, optional): JAX dtype. Defaults to None.
-        device (DeviceT, optional): JAX device. Defaults to None.
-        depth (int, optional): Number of recursive backwards derivatives to define. Defaults to 1.
-        create_jvp (bool, optional): Whether to also create a jvp; not supported currently.
-
-    Raises:
-        ValueError: Raises an error if user requests a jvp because JAX doesn't currently support it.
-
-    Returns:
-        Callable: A JAX function with a (recursively) defined custom_vjp.
-    """
-
-    jdtype = jaxm.dtype(dtype)
-    outputs = torch_fn(*args)
-    output_shape = tu.tree_map(lambda x: ShapeDtypeStruct(x.shape, dtype=jdtype), outputs)
-
-    def fn(*args):
-        return wrap_torch_fn(torch_fn, shape=output_shape, dtype=dtype, device=device)(*args)
-
-    if depth <= 0:
-        return fn
-
-    fn = jaxm.jax.custom_vjp(fn)
-
-    def fwd_fn(*args):
-        return fn(*args), args
-
-    def bwd_fn_torch(args, gs):
-        _, vjp_fn = torch.func.vjp(torch_fn, *args)
-        return vjp_fn(gs)
-
-    if create_jvp:
-        raise ValueError("This is currently not supported by JAX")
-        bwd_fn = create_custom_jvp(bwd_fn_torch, args, outputs, dtype=dtype, device=device, depth=1)
-    else:
-        bwd_fn = create_custom_vjp(
-            bwd_fn_torch, args, outputs, dtype=dtype, device=device, depth=depth - 1
-        )
-        fn.defvjp(fwd_fn, bwd_fn)
-
     return fn

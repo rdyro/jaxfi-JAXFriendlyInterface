@@ -20,12 +20,12 @@ def make_random_key():
     return make_random_keys(1)[0]
 
 
-def copy_module(mod):
+def copy_module(mod, recursive=True):
     new_mod = ModuleType(mod.__name__ + "_jfi")
     for attr in dir(mod):
         if not attr.startswith("_"):
-            if isinstance(getattr(mod, attr), ModuleType):
-                setattr(new_mod, attr, copy_module(getattr(mod, attr)))
+            if isinstance(getattr(mod, attr), ModuleType) and recursive:
+                setattr(new_mod, attr, copy_module(getattr(mod, attr), recursive=recursive))
             else:
                 setattr(new_mod, attr, getattr(mod, attr))
     return new_mod
