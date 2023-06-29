@@ -45,10 +45,12 @@ class AutoJIT:
             static_argnames = set(k for (k, v) in kw.items() if not isinstance(v, self._jit_types))
 
             static_argnums = static_argnums.union(self.static_argnums)
-            static_argnames = static_argnums.union(self.static_argnames)
+            static_argnames = static_argnames.union(self.static_argnames)
 
             self.compiled_fn = jit(
-                self.fn, static_argnums=static_argnums, static_argnames=static_argnames
+                self.fn,
+                static_argnums=tuple(static_argnums),
+                static_argnames=tuple(static_argnames),
             )
         return self.compiled_fn(*args, **kw)
 
