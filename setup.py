@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="jfi",
-    version="0.4.2",
+    version="0.5.0",
     author="Robert Dyro",
     description=("Simplified and user friendly interface to JAX."),
     license="MIT",

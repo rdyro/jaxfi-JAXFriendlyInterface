@@ -12,7 +12,7 @@ ModuleType = type(os)  # a Python version agnostic to the get the module type
 
 def make_random_keys(n):
     keys = globals.jrandom.split(globals.key, n + 1)
-    key = keys[-1]
+    globals.key = keys[-1]
     return keys[:-1]
 
 
@@ -45,7 +45,8 @@ def _is_dtype(x):
 def resolve_device(device: Tuple[str, Any, None], idx: int = 0):
     """Convert device name to the device handle."""
     if device is None:
-        return globals.DEFAULT_DEVICE
+        #return globals.DEFAULT_DEVICE
+        return None
     return globals.jax.devices(device)[idx] if isinstance(device, str) else device
 
 
@@ -133,7 +134,7 @@ def _enable_pickling_fixes():
 def default_dtype_for_device(device):
     """Convert a device to its default dtype (global dtype for CPU, float32 for GPU)."""
     device = resolve_device(device)
-    if re.search("cpu", device.device_kind) is not None:
+    if device is None or re.search("cpu", device.device_kind) is not None:
         return globals.DEFAULT_DTYPE
     else:
         return globals.jnp.float32
@@ -156,7 +157,8 @@ def get_default_device():
 
 def set_default_device(device):
     """Sets the default device for which to create arrays on."""
-    globals.DEFAULT_DEVICE = device
+    globals.DEFAULT_DEVICE = resolve_device(device)
+    globals.jax.config.update("jax_default_device", globals.DEFAULT_DEVICE)
 
 
 def manual_seed(val):

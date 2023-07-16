@@ -8,6 +8,7 @@ Friendly Interface to JAX.
 - [🔪 The Sharp Bits 🔪](#-the-sharp-bits-)
 - [Notes](#notes)
 - [Installation](#installation)
+- [Changelog](#changelog)
 
 **News: Better, improved interface! `from jfi import jaxm` is all you need!**
 
@@ -36,6 +37,9 @@ from jfi import jaxm
 
 # Working with CPU and GPU
 
+> JAX has automatic device placement in functions, so omit the `device` argument
+> when creating arrays in functions, i.e., in functions, specify only the dtype.
+
 Placing arrays on GPU and CPU is easy, either specify device/dtype directly or
 use `jaxm.to` to move the array to a specific device/dtype.
 ```python
@@ -51,7 +55,7 @@ jaxm.set_default_device("gpu")
 jaxm.get_default_device()
 jaxm.get_default_dtype()
 ```
-**Default `dtype` refers to CPU default dtype, default GPU dtype is always `float32`, but `float64` arrays can be created on the GPU by specifying the dtype explicitly or by using `jaxm.to`.**
+**Default `dtype` refers to CPU default dtype, default GPU dtype is always `float32`, but `float64` arrays can be created on the GPU by specifying the *dtype explicitly or by using `jaxm.to`.**
 
 `jaxm` behaves like numpy (jax.numpy). Some methods are
 patched directly from jax.
@@ -112,8 +116,19 @@ I'm not affiliated with [JAX](https://github.com/google/jax) or
 
 # Installation
 
+
 To install, issue
 ```bash
-pip install .
+$ pip install .
 ```
-from the project root.
+from the project root, or simply run
+```bash
+$ pip install git+https://github.com/rdyro/jfi-JAXFriendlyInterface.git
+```
+
+# Changelog
+
+- version 0.5.0
+    - settled on the default numpy module copy behavior
+    - omit `device` when creating arrays in functions - this now works correctly
+    - introduced more tests

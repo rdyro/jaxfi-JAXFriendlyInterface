@@ -1,5 +1,11 @@
 import re
-import unittest
+
+import sys
+from pathlib import Path
+
+path = Path(__file__).absolute().parents[1]
+if str(path) not in sys.path:
+    sys.path.insert(path, 0)
 
 from jfi import jaxm
 import jfi
@@ -30,7 +36,7 @@ def test_construction():
         "randn": jaxm.randn(2),
         "rand": jaxm.rand(2),
     }
-    for (k, z) in zs.items():
+    for k, z in zs.items():
         msg = f"failed for {k}"
         assert z.dtype == jaxm.float32, msg
         assert re.search("cpu", z.device().device_kind, flags=re.IGNORECASE) is not None, msg
@@ -81,6 +87,7 @@ def test_construction():
     jaxm.set_default_device("cpu")
     jaxm.set_default_dtype(jaxm.float64)
 
+
 def test_moving():
     try:
         jaxm.jax.devices("gpu")
@@ -117,3 +124,8 @@ def test_moving():
 
             r = jaxm.to(jaxm.randn(2), dtype=dtype, device=device)
             check_dtype_device(r, dtype=dtype, device=device)
+
+
+if __name__ == "__main__":
+    test_construction()
+    test_moving()

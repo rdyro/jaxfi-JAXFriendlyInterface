@@ -31,20 +31,19 @@ def init(seed=None):
     import jax.random as jrandom
     import jax.scipy as jsp
 
-    globals.jax, globals.jnp, globals.jrandom, globals.jsp = jax, jnp, jrandom, jsp 
+    globals.jax, globals.jnp, globals.jrandom, globals.jsp = jax, jnp, jrandom, jsp
+    jax.config.update("jax_enable_x64", True)  # ensure float64 support
 
     # binding main derivatives and jit
-    if int(os.environ.get("JFI_COPY_NUMPY", 1)):
-        jaxm = copy_module(jnp)
-    else:
-        jaxm = jnp
+    jaxm = copy_module(jnp, recursive=False)
 
     jaxm.grad, jaxm.jacobian, jaxm.hessian = jax.grad, jax.jacobian, jax.hessian
     jaxm.jvp, jaxm.vjp, jaxm.stop_gradient = jax.jvp, jax.vjp, jax.lax.stop_gradient
     jaxm.jit, jaxm.vmap = jax.jit, jax.vmap
 
-    DEFAULT_DEVICE, DEFAULT_DTYPE = jax.devices("cpu")[0], jnp.float64
+    DEFAULT_DEVICE, DEFAULT_DTYPE = jax.devices("cpu")[0], jnp.float32
     globals.DEFAULT_DEVICE, globals.DEFAULT_DTYPE = DEFAULT_DEVICE, DEFAULT_DTYPE
+    globals.jax.config.update("jax_default_device", DEFAULT_DEVICE)
 
     # binding random numbers
     seed = None
@@ -60,7 +59,7 @@ def init(seed=None):
 
     def device_dtype_fn(fn, without_dtype=False, check_second_arg_for_dtype=False):
         def fn_(*args, **kw):
-            device = resolve_device(kw.get("device", globals.DEFAULT_DEVICE))
+            device = resolve_device(kw.get("device", None))
             if "device" in kw:
                 del kw["device"]
             if not without_dtype:
@@ -68,7 +67,7 @@ def init(seed=None):
             if check_second_arg_for_dtype and len(args) >= 2 and _is_dtype(args[1]):
                 kw["dtype"] = args[1]
                 args = args[:1] + args[2:]
-            return jax.device_put(fn(*args, **kw), device)
+            return fn(*args, **kw) if device is None else jax.device_put(fn(*args, **kw), device)
 
         return fn_
 
@@ -93,7 +92,7 @@ def init(seed=None):
                 if not isinstance(key2, jax.interpreters.partial_eval.DynamicJaxprTracer):
                     globals.key = key2
             # set correct device and dtype
-            device = resolve_device(kw.get("device", globals.DEFAULT_DEVICE))
+            device = resolve_device(kw.get("device", None))
             if "device" in kw:
                 del kw["device"]
             ddtype = (
@@ -103,7 +102,11 @@ def init(seed=None):
             # make the size a tuple if this is the only positional argument
             if first_arg_to_tuple and len(args) == 1 and not hasattr(args[0], "__iter__"):
                 args = [(args[0],)] + list(args)[1:]
-            ret = jax.device_put(fn(key1, *args, **kw), device)
+            ret = (
+                fn(key1, *args, **kw)
+                if device is None
+                else jax.device_put(fn(key1, *args, **kw), device)
+            )
             return ret
 
         return jaxm_fn
