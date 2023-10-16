@@ -1,6 +1,6 @@
 # jfi (JAX Friendly Interface) - JAX with a PyTorch-like interface
 
-Friendly Interface to JAX.
+Friendly Interface to JAX, that behaves similar to PyTorch while maintaining compatibility.
 
 - [jfi (JAX Friendly Interface) - JAX with a PyTorch-like interface](#jfi-jax-friendly-interface---jax-with-a-pytorch-like-interface)
 - [Working with CPU and GPU](#working-with-cpu-and-gpu)
@@ -116,8 +116,13 @@ I'm not affiliated with [JAX](https://github.com/google/jax) or
 
 # Installation
 
+```bash
+$ pip install jaxfi
+```
 
-To install, issue
+Notice `jaxfi`, not, `jfi`. The package name is still `jfi`, but PyPI hosts it as `jaxfi`.
+
+Alternatively, to install from source, issue
 ```bash
 $ pip install .
 ```
@@ -125,6 +130,7 @@ from the project root, or simply run
 ```bash
 $ pip install git+https://github.com/rdyro/jfi-JAXFriendlyInterface.git
 ```
+
 
 # Changelog
 

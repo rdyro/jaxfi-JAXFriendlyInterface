@@ -1,0 +1,25 @@
+[project]
+name = "jaxfi"
+version = "0.5.0"
+authors = [
+  { name="Robert Dyro", email="robert.dyro@gmail.com" },
+]
+description = "Friendly Interface to JAX, that behaves similar to PyTorch while maintaining compatibility."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/rdyro/jfi-JAXFriendlyInterface"
+"Bug Tracker" = "https://github.com/rdyro/jfi-JAXFriendlyInterface"
+
+[tool.ruff]
+line-length = 100
+
