@@ -21,7 +21,7 @@ def make_random_key():
 
 
 def copy_module(mod, recursive=True):
-    new_mod = ModuleType(mod.__name__ + "_jfi")
+    new_mod = ModuleType(mod.__name__ + "_jaxfi")
     for attr in dir(mod):
         if not attr.startswith("_"):
             if isinstance(getattr(mod, attr), ModuleType) and recursive:

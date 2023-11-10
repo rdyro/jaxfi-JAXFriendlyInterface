@@ -7,8 +7,8 @@ path = Path(__file__).absolute().parents[1]
 if str(path) not in sys.path:
     sys.path.insert(path, 0)
 
-from jfi import jaxm
-import jfi
+from jaxfi import jaxm
+import jaxfi
 
 
 def test_construction():
@@ -103,7 +103,7 @@ def test_moving():
 
     for dtype in dtypes:
         for device in devices:
-            dtype, device = jfi.resolve_dtype(dtype), jfi.resolve_device(device)
+            dtype, device = jaxfi.resolve_dtype(dtype), jaxfi.resolve_device(device)
             r = jaxm.randn(2, dtype=dtype, device=device)
             check_dtype_device(r, dtype=dtype, device=device)
 

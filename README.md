@@ -1,8 +1,8 @@
-# jfi (JAX Friendly Interface) - JAX with a PyTorch-like interface
+# `jaxfi` (JAX Friendly Interface) - JAX with a PyTorch-like interface
 
 Friendly Interface to JAX, that behaves similar to PyTorch while maintaining compatibility.
 
-- [jfi (JAX Friendly Interface) - JAX with a PyTorch-like interface](#jfi-jax-friendly-interface---jax-with-a-pytorch-like-interface)
+- [`jaxfi` (JAX Friendly Interface) - JAX with a PyTorch-like interface](#jaxfi-jax-friendly-interface---jax-with-a-pytorch-like-interface)
 - [Working with CPU and GPU](#working-with-cpu-and-gpu)
 - [JAX modules are accessible directly](#jax-modules-are-accessible-directly)
 - [🔪 The Sharp Bits 🔪](#-the-sharp-bits-)
@@ -10,11 +10,11 @@ Friendly Interface to JAX, that behaves similar to PyTorch while maintaining com
 - [Installation](#installation)
 - [Changelog](#changelog)
 
-**News: Better, improved interface! `from jfi import jaxm` is all you need!**
+**News: Better, improved interface! `from jaxfi import jaxm` is all you need!**
 
 Creates a JAX-like module that behaves very similarly to PyTorch, so
 ```python
->>> from jfi import jaxm
+>>> from jaxfi import jaxm
 
 jaxm.norm === torch.norm
 jaxm.rand === torch.rand
@@ -27,12 +27,12 @@ jaxm.manual_seed === torch.manual_seed
 
 ```python
 # DO 
-from jfi import jaxm
+from jaxfi import jaxm
 import jaxopt
 
 # DON'T!!!
 import jaxopt
-from jfi import jaxm
+from jaxfi import jaxm
 ```
 
 # Working with CPU and GPU
@@ -120,7 +120,7 @@ I'm not affiliated with [JAX](https://github.com/google/jax) or
 $ pip install jaxfi
 ```
 
-Notice `jaxfi`, not, `jfi`. The package name is still `jfi`, but PyPI hosts it as `jaxfi`.
+The package name recently change from `jfi` to `jaxfi`, PyPI hosts it as `jaxfi`.
 
 Alternatively, to install from source, issue
 ```bash
@@ -128,11 +128,14 @@ $ pip install .
 ```
 from the project root, or simply run
 ```bash
-$ pip install git+https://github.com/rdyro/jfi-JAXFriendlyInterface.git
+$ pip install git+https://github.com/rdyro/jaxfi-JAXFriendlyInterface.git
 ```
 
 
 # Changelog
+
+- version 0.6.0
+  - official name change from `jfi` to `jaxfi`
 
 - version 0.5.0
     - settled on the default numpy module copy behavior

@@ -6,7 +6,7 @@ if str(path) not in sys.path:
     sys.path.insert(path, 0)
 
 
-from jfi import jaxm
+from jaxfi import jaxm
 
 
 def fn(x, y):
