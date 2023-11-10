@@ -3,7 +3,7 @@ from pathlib import Path
 
 path = Path(__file__).absolute().parents[1]
 if str(path) not in sys.path:
-    sys.path.insert(path, 0)
+    sys.path.insert(0, str(path))
 
 
 from jaxfi import jaxm

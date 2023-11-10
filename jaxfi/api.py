@@ -32,7 +32,11 @@ def init(seed=None):
     import jax.scipy as jsp
 
     globals.jax, globals.jnp, globals.jrandom, globals.jsp = jax, jnp, jrandom, jsp
-    jax.config.update("jax_enable_x64", True)  # ensure float64 support
+
+    try:
+        globals.jax.config.update("jax_enable_x64", True)  # ensure float64 support
+    except AttributeError:
+        pass
 
     # binding main derivatives and jit
     jaxm = copy_module(jnp, recursive=False)
@@ -43,7 +47,10 @@ def init(seed=None):
 
     DEFAULT_DEVICE, DEFAULT_DTYPE = jax.devices("cpu")[0], jnp.float32
     globals.DEFAULT_DEVICE, globals.DEFAULT_DTYPE = DEFAULT_DEVICE, DEFAULT_DTYPE
-    globals.jax.config.update("jax_default_device", DEFAULT_DEVICE)
+    try:
+        globals.jax.config.update("jax_default_device", DEFAULT_DEVICE)
+    except AttributeError:
+        pass
 
     # binding random numbers
     seed = None
@@ -54,7 +61,7 @@ def init(seed=None):
             hashlib.sha256(pickle.dumps((time.time(), os.getpid(), os.urandom(100)))).hexdigest()
         )
     )
-    key = jrandom.PRNGKey(seed)
+    key = jax.device_put(jrandom.PRNGKey(seed), jax.devices("cpu")[0])
     globals.key = key
 
     def device_dtype_fn(fn, without_dtype=False, check_second_arg_for_dtype=False):
@@ -92,7 +99,10 @@ def init(seed=None):
                 if not isinstance(key2, jax.interpreters.partial_eval.DynamicJaxprTracer):
                     globals.key = key2
             # set correct device and dtype
-            device = resolve_device(kw.get("device", None))
+            key1, key2 = jrandom.split(globals.key)
+            under_jit = isinstance(key2, jax.interpreters.partial_eval.DynamicJaxprTracer)
+            default_device = None if under_jit else get_default_device()
+            device = resolve_device(kw.get("device", default_device)) 
             if "device" in kw:
                 del kw["device"]
             ddtype = (

@@ -3,8 +3,10 @@ from typing import Callable, Iterable
 
 import numpy as np
 
-from jax import Array, jit
+from jax import jit
 from jax.tree_util import tree_flatten, tree_unflatten, tree_map
+
+from ..types import Array
 
 
 _jit_types = (Array, float, np.ndarray)

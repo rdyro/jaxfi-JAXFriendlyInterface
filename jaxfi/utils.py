@@ -6,6 +6,7 @@ import copyreg
 import numpy as np
 
 from . import globals
+from .types import Array
 
 ModuleType = type(os)  # a Python version agnostic to the get the module type
 
@@ -45,7 +46,6 @@ def _is_dtype(x):
 def resolve_device(device: Tuple[str, Any, None], idx: int = 0):
     """Convert device name to the device handle."""
     if device is None:
-        #return globals.DEFAULT_DEVICE
         return None
     return globals.jax.devices(device)[idx] if isinstance(device, str) else device
 
@@ -56,7 +56,7 @@ def resolve_dtype(dtype):
 
 
 def _jaxm_to(
-    x: "Array",  # noqa: F821
+    x: Array,  # noqa: F821
     device_or_dtype: Optional[Tuple[str, Any]] = None,
     device: Optional[Tuple[str, Any]] = None,
     dtype: Optional[Tuple[str, Any]] = None,
@@ -91,9 +91,7 @@ def _tree_jaxm_to(
     dtype: Optional[Tuple[str, Any]] = None,
 ):
     return globals.jax.tree_util.tree_map(
-        lambda z: z
-        if not isinstance(z, globals.jax.Array)
-        else _jaxm_to(z, device_or_dtype, device, dtype),
+        lambda z: z if not isinstance(z, Array) else _jaxm_to(z, device_or_dtype, device, dtype),
         x,
     )
 
@@ -125,7 +123,10 @@ def _enable_pickling_fixes():
     import jaxlib
 
     copyreg.pickle(jaxlib.xla_extension.Device, _pickle_device)
-    copyreg.pickle(jaxlib.xla_extension.ArrayImpl, _pickle_array)
+    try:
+        copyreg.pickle(jaxlib.xla_extension.ArrayImpl, _pickle_array)
+    except AttributeError:
+        copyreg.pickle(jaxlib.xla_extension.DeviceArray, _pickle_array)
 
 
 ####################################################################################################
@@ -155,10 +156,16 @@ def get_default_device():
     return globals.DEFAULT_DEVICE
 
 
-def set_default_device(device):
+def set_default_device(device, idx=0):
     """Sets the default device for which to create arrays on."""
-    globals.DEFAULT_DEVICE = resolve_device(device)
-    globals.jax.config.update("jax_default_device", globals.DEFAULT_DEVICE)
+    if isinstance(device, str) and ":" in device:
+        device, idx = device.split(":", 1)
+        idx = int(idx)
+    globals.DEFAULT_DEVICE = resolve_device(device, idx)
+    try:
+        globals.jax.config.update("jax_default_device", globals.DEFAULT_DEVICE)
+    except AttributeError:
+        pass
 
 
 def manual_seed(val):
