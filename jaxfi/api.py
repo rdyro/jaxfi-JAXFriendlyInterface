@@ -18,6 +18,10 @@ def init(seed=None):
     os.environ.setdefault("JAX_ENABLE_X64", "True")
     os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", str(False))
     os.environ.setdefault("XLA_PYTHON_CLIENT_ALLOCATOR", "platform")
+    existing_xla_flags = os.environ.get("XLA_FLAGS", "")
+    os.environ["XLA_FLAGS"] = (
+        existing_xla_flags + f" --xla_force_host_platform_device_count={os.cpu_count()}"
+    )
     if os.environ.get("JAX_PLATFORM_NAME") is None:
         try:
             check_output("nvidia-smi")
@@ -102,7 +106,7 @@ def init(seed=None):
             key1, key2 = jrandom.split(globals.key)
             under_jit = isinstance(key2, jax.interpreters.partial_eval.DynamicJaxprTracer)
             default_device = None if under_jit else get_default_device()
-            device = resolve_device(kw.get("device", default_device)) 
+            device = resolve_device(kw.get("device", default_device))
             if "device" in kw:
                 del kw["device"]
             ddtype = (

@@ -6,7 +6,7 @@ if str(path) not in sys.path:
     sys.path.insert(0, str(path))
 
 
-from jaxfi import jaxm
+from jaxfi import jaxm # noqa: E402
 
 
 def fn(x, y):
@@ -35,7 +35,9 @@ def test_non_jit_behavior():
             x = jaxm.randn(shape, dtype=dtype, device=device)
             y = jaxm.randn(shape, dtype=dtype, device=device)
             z =  fn(x, y)
-            assert z.device().device_kind == device.device_kind
+            z_devices = list(z.devices())
+            assert len(z_devices) == 1
+            assert z_devices[0].device_kind == device.device_kind
             assert z.dtype == dtype
 
 def test_jit_behavior():
@@ -49,7 +51,8 @@ def test_jit_behavior():
             x = jaxm.randn(shape, dtype=dtype, device=device)
             y = jaxm.randn(shape, dtype=dtype, device=device)
             z =  fn_jit(x, y)
-            assert z.device().device_kind == device.device_kind
+            z_devices = list(z.devices())
+            assert z_devices[0].device_kind == device.device_kind
             assert z.dtype == dtype
 
 

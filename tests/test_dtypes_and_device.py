@@ -2,8 +2,8 @@ import re
 
 import sys
 from pathlib import Path
-from warnings import warn
 import logging
+
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
@@ -11,8 +11,9 @@ path = Path(__file__).absolute().parents[1]
 if str(path) not in sys.path:
     sys.path.insert(0, str(path))
 
-from jaxfi import jaxm
-import jaxfi
+from jaxfi import jaxm  # noqa: E402
+import jaxfi  # noqa: E402
+
 
 def _allocate(opts=None):
     opts = dict() if opts is None else opts
@@ -25,14 +26,17 @@ def _allocate(opts=None):
         "rand": jaxm.rand(2, **opts),
     }
 
+
 def _check_correct_placement(zs, dtype, device):
     for k, z in zs.items():
         msg = f"failed for {k}"
         assert z.dtype == dtype, msg
+        z_devices = list(z.devices())
+        assert len(z_devices) == 1
         if device.lower() == "cpu":
-            cond = re.search("cpu", z.device().device_kind, flags=re.IGNORECASE) is not None
+            cond = re.search("cpu", z_devices[0].device_kind, flags=re.IGNORECASE) is not None
         else:
-            cond = re.search("cpu", z.device().device_kind, flags=re.IGNORECASE) is None
+            cond = re.search("cpu", z_devices[0].device_kind, flags=re.IGNORECASE) is None
         if int(getattr(jaxm.jax, "__version__", "0.0.0").split(".")[1]) < 4:
             if not cond:
                 msg = (
@@ -81,8 +85,10 @@ def test_moving():
     def check_dtype_device(x, dtype=None, device=None):
         if dtype is not None:
             assert x.dtype == dtype
+        x_devices = list(x.devices())
+        assert len(x_devices) == 1
         if device is not None:
-            assert x.device() == device
+            assert x_devices[0] == device
 
     for dtype in dtypes:
         for device in devices:

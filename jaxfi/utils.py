@@ -79,7 +79,8 @@ def _jaxm_to(
                 default_dtype_for_device(device)
             )
         elif device is None and dtype is not None:
-            return x.astype(resolve_dtype(dtype))
+            ret = x.astype(resolve_dtype(dtype))
+            return ret
         else:
             return x
 
@@ -91,7 +92,10 @@ def _tree_jaxm_to(
     dtype: Optional[Tuple[str, Any]] = None,
 ):
     return globals.jax.tree_util.tree_map(
-        lambda z: z if not isinstance(z, Array) else _jaxm_to(z, device_or_dtype, device, dtype),
+        lambda z: z
+        # inspired by https://github.com/patrick-kidger/equinox
+        if not isinstance(z, (Array, np.ndarray, np.generic)) 
+        else _jaxm_to(z, device_or_dtype, device=device, dtype=dtype),
         x,
     )
 
@@ -115,8 +119,8 @@ def _make_jax_array(arr_value, device):
     return jax.device_put(arr_value, device=device)
 
 
-def _pickle_array(arr):
-    return _make_jax_array, (np.array(arr), arr.device())
+def _pickle_array(arr: Array):
+    return _make_jax_array, (np.array(arr), arr.devices())
 
 
 def _enable_pickling_fixes():

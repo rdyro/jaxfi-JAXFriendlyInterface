@@ -6,7 +6,7 @@ if str(path) not in sys.path:
     sys.path.insert(0, str(path))
 
 
-from jaxfi import jaxm
+from jaxfi import jaxm # noqa: E402
 
 
 def test_randint():

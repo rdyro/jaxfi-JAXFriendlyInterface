@@ -134,6 +134,11 @@ $ pip install git+https://github.com/rdyro/jaxfi-JAXFriendlyInterface.git
 
 # Changelog
 
+- version 0.6.3
+  - `jaxm.to` now also moves numpy, not just jax, arrays to a device and dtype
+  - experimental `auto_pmap` function available, automatically assigning first
+    batch dimension to multiple devices, e.g., dividing 16 tasks into 6 CPUs
+
 - version 0.6.0
   - official name change from `jfi` to `jaxfi`
 
