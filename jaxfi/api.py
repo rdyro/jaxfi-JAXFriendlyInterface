@@ -7,11 +7,10 @@ from warnings import warn
 
 from .dynamic_lib_loading import load_cuda_libs
 
-os.environ["JAX_TRACEBACK_FILTERING"] = "off"
-
 # Load OS-preferred CUDA libraries, often the ones from /usr/local/cuda ########
 # unless the user decides against this #########################################
-if bool(os.environ.get("JAXFI_LOAD_SYSTEM_CUDA_LIBS", "0")):
+bool_map = {"0": False, "1": True, "true": True, "false": False}
+if bool_map.get(os.environ.get("JAXFI_LOAD_SYSTEM_CUDA_LIBS", "0").lower(), False):
     msg = (
         "\nWe are manually loading OS preferred CUDA libraries. "
         + "This should allow JAX to work alongside PyTorch "
