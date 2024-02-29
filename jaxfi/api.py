@@ -3,6 +3,24 @@ from subprocess import check_output
 import time
 import hashlib
 import pickle
+from warnings import warn
+
+from .dynamic_lib_loading import load_cuda_libs
+
+os.environ["JAX_TRACEBACK_FILTERING"] = "off"
+
+# Load OS-preferred CUDA libraries, often the ones from /usr/local/cuda ########
+# unless the user decides against this #########################################
+if bool(os.environ.get("JAXFI_LOAD_SYSTEM_CUDA_LIBS", "0")):
+    msg = (
+        "\nWe are manually loading OS preferred CUDA libraries. "
+        + "This should allow JAX to work alongside PyTorch "
+        + "(which currently bundles different-version CUDA libraries). "
+        + "Set JAXFI_LOAD_SYSTEM_CUDA_LIBS=0 to disable this behavior."
+    )
+    warn(msg)
+    load_cuda_libs()
+################################################################################
 
 from . import globals
 from .utils import copy_module, default_dtype_for_device, _is_dtype, resolve_device
