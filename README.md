@@ -131,8 +131,22 @@ from the project root, or simply run
 $ pip install git+https://github.com/rdyro/jaxfi-JAXFriendlyInterface.git
 ```
 
+If you wish to let JAX (not `jaxfi`) work alongside PyTorch in the same virtual
+environment, set/export the environment variable `JAXFI_LOAD_SYSTEM_CUDA_LIBS=true`
+before importing `jaxfi` or `jax` for the first time.
+```bash
+$ echo 'export JAXFI_LOAD_SYSTEM_CUDA_LIBS=true' >> ~/.bashrc
+$ echo 'export JAXFI_LOAD_SYSTEM_CUDA_LIBS=true' >> ~/.zshrc
+```
+This will instruct `jaxfi` to dynamically load the system CUDA libraries.
+
 
 # Changelog
+
+- version 0.6.5
+  - added the ability to dynamically load the system CUDA libraries so allowing
+  JAX to live in harmony with PyTorch, set the environment variable
+  `JAXFI_LOAD_SYSTEM_CUDA_LIBS=true` to enable this feature
 
 - version 0.6.3
   - `jaxm.to` now also moves numpy, not just jax, arrays to a device and dtype
