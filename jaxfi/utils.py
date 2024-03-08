@@ -43,11 +43,20 @@ def _is_dtype(x):
         return False
 
 
-def resolve_device(device: Tuple[str, Any, None], idx: int = 0):
+def resolve_device(device: Tuple[str, Any, None], idx: int = -1):
     """Convert device name to the device handle."""
     if device is None:
         return None
-    return globals.jax.devices(device)[idx] if isinstance(device, str) else device
+    if not isinstance(device, str): 
+        return device # already a device (or sharding)
+    if isinstance(device, str) and ":" in device:
+        assert idx == -1, "When using the ':' syntax, do not specify idx separately."
+        device, idx = device.split(":", 1)
+        idx = int(idx)
+    idx = 0 if idx == -1 else idx
+    devices_list = globals.jax.devices(device)
+    assert 0 <= idx < len(devices_list), f"Invalid device index {idx} for device {device}. Available devices: {devices_list}"
+    return devices_list[idx]
 
 
 def resolve_dtype(dtype):
@@ -139,7 +148,18 @@ def _enable_pickling_fixes():
 def default_dtype_for_device(device):
     """Convert a device to its default dtype (global dtype for CPU, float32 for GPU)."""
     device = resolve_device(device)
-    if device is None or re.search("cpu", device.device_kind) is not None:
+    if device is not None:
+        # this might be a sharding
+        if not hasattr(device, "device_kind"):
+            try:
+                device_kind = list(device.device_set)[0].device_kind
+            except:
+                device_kind = None # could not determine device kind
+        else:
+            device_kind = device.device_kind
+    else:
+        device_kind = None
+    if device is None or (device_kind is not None and re.search("cpu", device_kind) is not None):
         return globals.DEFAULT_DTYPE
     else:
         return globals.jnp.float32

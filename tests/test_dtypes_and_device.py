@@ -3,6 +3,7 @@ import re
 import sys
 from pathlib import Path
 import logging
+import pytest
 
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -14,6 +15,11 @@ if str(path) not in sys.path:
 from jaxfi import jaxm  # noqa: E402
 import jaxfi  # noqa: E402
 
+try:
+    jaxm.jax.devices("gpu")
+    HAS_GPU = True
+except RuntimeError:
+    HAS_GPU = False
 
 def _allocate(opts=None):
     opts = dict() if opts is None else opts
@@ -75,12 +81,9 @@ def test_construction():
     jaxm.set_default_dtype(jaxm.float64)
 
 
-def test_moving():
-    try:
-        jaxm.jax.devices("gpu")
-        dtypes, devices = [jaxm.float32, jaxm.float64], ["cpu", "gpu"]
-    except RuntimeError:
-        dtypes, devices = [jaxm.float32, jaxm.float64], ["cpu"]
+@pytest.mark.parametrize("device", ["cpu", "cuda"] if HAS_GPU else ["cpu"])
+@pytest.mark.parametrize("dtype", [jaxm.float32, jaxm.float64])
+def test_moving(device, dtype):
 
     def check_dtype_device(x, dtype=None, device=None):
         if dtype is not None:
@@ -90,29 +93,27 @@ def test_moving():
         if device is not None:
             assert x_devices[0] == device
 
-    for dtype in dtypes:
-        for device in devices:
-            dtype, device = jaxfi.resolve_dtype(dtype), jaxfi.resolve_device(device)
-            r = jaxm.randn(2, dtype=dtype, device=device)
-            check_dtype_device(r, dtype=dtype, device=device)
+    dtype, device = jaxfi.resolve_dtype(dtype), jaxfi.resolve_device(device)
+    r = jaxm.randn(2, dtype=dtype, device=device)
+    check_dtype_device(r, dtype=dtype, device=device)
 
-            r = jaxm.randn(2, dtype=dtype)
-            check_dtype_device(r, dtype=dtype)
-            r = jaxm.randn(2, device=device)
-            check_dtype_device(r, device=device)
+    r = jaxm.randn(2, dtype=dtype)
+    check_dtype_device(r, dtype=dtype)
+    r = jaxm.randn(2, device=device)
+    check_dtype_device(r, device=device)
 
-            r = jaxm.to(jaxm.randn(2), dtype)
-            check_dtype_device(r, dtype=dtype)
-            r = jaxm.to(jaxm.randn(2), device)
-            check_dtype_device(r, device=device)
+    r = jaxm.to(jaxm.randn(2), dtype)
+    check_dtype_device(r, dtype=dtype)
+    r = jaxm.to(jaxm.randn(2), device)
+    check_dtype_device(r, device=device)
 
-            r = jaxm.to(jaxm.randn(2), dtype=dtype)
-            check_dtype_device(r, dtype=dtype)
-            r = jaxm.to(jaxm.randn(2), device=device)
-            check_dtype_device(r, device=device)
+    r = jaxm.to(jaxm.randn(2), dtype=dtype)
+    check_dtype_device(r, dtype=dtype)
+    r = jaxm.to(jaxm.randn(2), device=device)
+    check_dtype_device(r, device=device)
 
-            r = jaxm.to(jaxm.randn(2), dtype=dtype, device=device)
-            check_dtype_device(r, dtype=dtype, device=device)
+    r = jaxm.to(jaxm.randn(2), dtype=dtype, device=device)
+    check_dtype_device(r, dtype=dtype, device=device)
 
 
 if __name__ == "__main__":

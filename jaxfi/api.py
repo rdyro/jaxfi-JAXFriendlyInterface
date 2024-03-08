@@ -82,7 +82,8 @@ def init(seed=None):
             hashlib.sha256(pickle.dumps((time.time(), os.getpid(), os.urandom(100)))).hexdigest()
         )
     )
-    key = jax.device_put(jrandom.PRNGKey(seed), jax.devices("cpu")[0])
+    #key = jax.device_put(jrandom.PRNGKey(seed), jax.devices("cpu")[0])
+    key = jrandom.PRNGKey(seed)
     globals.key = key
 
     def device_dtype_fn(fn, without_dtype=False, check_second_arg_for_dtype=False):
@@ -121,8 +122,9 @@ def init(seed=None):
                     globals.key = key2
             # set correct device and dtype
             key1, key2 = jrandom.split(globals.key)
-            under_jit = isinstance(key2, jax.interpreters.partial_eval.DynamicJaxprTracer)
-            default_device = None if under_jit else get_default_device()
+            # under_jit = isinstance(key2, jax.interpreters.partial_eval.DynamicJaxprTracer)
+            # default_device = None if under_jit else get_default_device()
+            default_device = None
             device = resolve_device(kw.get("device", default_device))
             if "device" in kw:
                 del kw["device"]
@@ -147,6 +149,9 @@ def init(seed=None):
     jaxm.randint = random_fn(
         lambda key, low, high, size, dtype=None: jrandom.randint(key, size, low, high, dtype=dtype),
         default_dtype=jaxm.int64,
+    )
+    jaxm.randperm = lambda n, device=None, dtype=None: jaxm.argsort(
+        jaxm.rand(n, device=device, dtype=dtype)
     )
 
     # LA factorizations and solves

@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 path = Path(__file__).absolute().parents[1]
 if str(path) not in sys.path:
     sys.path.insert(0, str(path))
@@ -26,34 +28,32 @@ except RuntimeError:
 
 ####################################################################################################
 
-def test_non_jit_behavior():
-    devices = [jaxm.resolve_device(x) for x in (["cpu", "cuda"] if HAS_GPU else ["cpu"])]
+@pytest.mark.parametrize("device", ["cpu", "cuda"] if HAS_GPU else ["cpu"])
+@pytest.mark.parametrize("dtype", [jaxm.float32, jaxm.float64])
+def test_non_jit_behavior(device, dtype):
     shape = (10, 2)
 
-    for dtype in [jaxm.float32, jaxm.float64]:
-        for device in devices:
-            x = jaxm.randn(shape, dtype=dtype, device=device)
-            y = jaxm.randn(shape, dtype=dtype, device=device)
-            z =  fn(x, y)
-            z_devices = list(z.devices())
-            assert len(z_devices) == 1
-            assert z_devices[0].device_kind == device.device_kind
-            assert z.dtype == dtype
+    x = jaxm.randn(shape, dtype=dtype, device=device)
+    y = jaxm.randn(shape, dtype=dtype, device=device)
+    z =  fn(x, y)
+    z_devices = list(z.devices())
+    assert len(z_devices) == 1
+    assert z_devices[0].device_kind == jaxm.resolve_device(device).device_kind
+    assert z.dtype == dtype
 
-def test_jit_behavior():
-    devices = [jaxm.resolve_device(x) for x in (["cpu", "cuda"] if HAS_GPU else ["cpu"])]
+@pytest.mark.parametrize("device", ["cpu", "cuda"] if HAS_GPU else ["cpu"])
+@pytest.mark.parametrize("dtype", [jaxm.float32, jaxm.float64])
+def test_jit_behavior(device, dtype):
     shape = (10, 2)
 
     fn_jit = jaxm.jit(fn)
 
-    for dtype in [jaxm.float32, jaxm.float64]:
-        for device in devices:
-            x = jaxm.randn(shape, dtype=dtype, device=device)
-            y = jaxm.randn(shape, dtype=dtype, device=device)
-            z =  fn_jit(x, y)
-            z_devices = list(z.devices())
-            assert z_devices[0].device_kind == device.device_kind
-            assert z.dtype == dtype
+    x = jaxm.randn(shape, dtype=dtype, device=device)
+    y = jaxm.randn(shape, dtype=dtype, device=device)
+    z =  fn_jit(x, y)
+    z_devices = list(z.devices())
+    assert z_devices[0].device_kind == jaxm.resolve_device(device).device_kind
+    assert z.dtype == dtype
 
 
 if __name__ == "__main__":

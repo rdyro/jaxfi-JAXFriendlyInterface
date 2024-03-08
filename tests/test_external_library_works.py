@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+import pytest
 
 path = Path(__file__).absolute().parents[1]
 if str(path) not in sys.path:
@@ -13,7 +14,9 @@ try:
 except RuntimeError:
     HAS_GPU = False
 
-def test_optax():
+@pytest.mark.parametrize("device", ["cpu", "cuda"] if HAS_GPU else ["cpu"])
+@pytest.mark.parametrize("dtype", [jaxm.float32, jaxm.float64])
+def test_optax(device, dtype):
     try:
         import optax
     except ImportError:
@@ -21,13 +24,13 @@ def test_optax():
         return
 
     rand_fn = lambda dtype, device: jaxm.randn(3, dtype=dtype, device=device) # noqa: E731
-    devices = [jaxm.resolve_device(x) for x in (["cpu", "cuda"] if HAS_GPU else ["cpu"])]
-    for device in devices:
-        for dtype in [jaxm.float32, jaxm.float64]:
-            param = rand_fn(dtype, device)
-            opt = optax.adam(1e-3)
-            opt_state = opt.init([param])
-            gs = rand_fn(dtype, device)
-            updates, opt_state = opt.update([gs], opt_state, [param])
-            param = optax.apply_updates([param], updates)
-            print(param)
+    #devices = [jaxm.resolve_device(x) for x in (["cpu", "cuda"] if HAS_GPU else ["cpu"])]
+    #for device in devices:
+    #    for dtype in [jaxm.float32, jaxm.float64]:
+    param = rand_fn(dtype, device)
+    opt = optax.adam(1e-3)
+    opt_state = opt.init([param])
+    gs = rand_fn(dtype, device)
+    updates, opt_state = opt.update([gs], opt_state, [param])
+    param = optax.apply_updates([param], updates)
+    print(param)

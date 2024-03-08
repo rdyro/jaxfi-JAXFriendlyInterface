@@ -143,6 +143,10 @@ This will instruct `jaxfi` to dynamically load the system CUDA libraries.
 
 # Changelog
 
+- version 0.6.6
+  - random functions now (correctly) produce uncommitted arrays (see [https://jax.readthedocs.io/en/latest/faq.html#controlling-data-and-computation-placement-on-devices](https://jax.readthedocs.io/en/latest/faq.html#controlling-data-and-computation-placement-on-devices))
+  - added a PyTorch-like randperm function (implemented as argsort(rand))
+
 - version 0.6.5
   - added the ability to dynamically load the system CUDA libraries so allowing
   JAX to live in harmony with PyTorch, set the environment variable
