@@ -81,13 +81,13 @@ def load_cuda_libs():
             logger.info(f"Dynamically loading CUDA library: {lib_name}")
             try:
                 ctypes.CDLL(lib_name)
-            except:
+            except: # noqa E722
                 logger.info(f"Failed to load {lib_name}")
     for lib in CUDA_LIBS_TO_FIND:
         lib_name = _find_custom_cuda_lib(f"lib{lib}" + _get_shsuffix())
         logger.info(f"Dynamically loading CUDA library: {lib_name}")
         try:
             ctypes.CDLL(lib_name)
-        except:
+        except: # noqa E722
             logger.info(f"Failed to load {lib_name}")
     ARE_CUDA_LIBRARIES_LOADED = True

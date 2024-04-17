@@ -8,7 +8,7 @@ if str(path) not in sys.path:
     sys.path.insert(0, str(path))
 
 
-from jaxfi import jaxm  # noqa: E402
+import jaxfi as jaxm  # noqa: E402
 
 
 def fn(x, y):
@@ -47,7 +47,7 @@ def test_device_index_notation(device):
     correctly_fails = False
     try:
         jaxm.resolve_device(f"{device}:{i}")
-    except:
+    except: # noqa: E722
         correctly_fails = True
     assert correctly_fails
 
@@ -78,7 +78,7 @@ def test_sharding_placement_with_to(device):
 @pytest.mark.parametrize("dtype", [jaxm.float32, jaxm.float64, None])
 def test_whether_arrays_are_committed(device, dtype):
     jaxm.set_default_device(device)
-    test_commited = lambda x: not hasattr(x, "_committed") or not x._committed
+    test_commited = lambda x: not hasattr(x, "_committed") or not x._committed # noqa: E731
     assert test_commited(jaxm.randn((10, 2), dtype=dtype))
     assert test_commited(jaxm.rand((10, 2), dtype=dtype))
     assert test_commited(jaxm.randint(0, 10, (10, 2)))

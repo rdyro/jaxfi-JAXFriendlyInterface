@@ -10,11 +10,11 @@ Friendly Interface to JAX, that behaves similar to PyTorch while maintaining com
 - [Installation](#installation)
 - [Changelog](#changelog)
 
-**News: Better, improved interface! `from jaxfi import jaxm` is all you need!**
+**News: Better, improved interface! `import jaxfi as jaxm` is all you need!**
 
 Creates a JAX-like module that behaves very similarly to PyTorch, so
 ```python
->>> from jaxfi import jaxm
+>>> import jaxfi as jaxm
 
 jaxm.norm === torch.norm
 jaxm.rand === torch.rand
@@ -27,12 +27,12 @@ jaxm.manual_seed === torch.manual_seed
 
 ```python
 # DO 
-from jaxfi import jaxm
+import jaxfi as jaxm
 import jaxopt
 
 # DON'T!!!
 import jaxopt
-from jaxfi import jaxm
+import jaxfi as jaxm
 ```
 
 # Working with CPU and GPU
@@ -142,6 +142,10 @@ This will instruct `jaxfi` to dynamically load the system CUDA libraries.
 
 
 # Changelog
+
+- version 0.7.0
+  - `jaxfi` is now identical with `jaxm` so that both `import jaxfi as jaxm` and `from jaxfi import jaxm` work
+  - this change helps (at least the VSCode) Pylance resolve member fields in `jaxfi`
 
 - version 0.6.6
   - random functions now (correctly) produce uncommitted arrays (see [https://jax.readthedocs.io/en/latest/faq.html#controlling-data-and-computation-placement-on-devices](https://jax.readthedocs.io/en/latest/faq.html#controlling-data-and-computation-placement-on-devices))

@@ -153,7 +153,7 @@ def default_dtype_for_device(device):
         if not hasattr(device, "device_kind"):
             try:
                 device_kind = list(device.device_set)[0].device_kind
-            except:
+            except: # noqa: E722
                 device_kind = None # could not determine device kind
         else:
             device_kind = device.device_kind
