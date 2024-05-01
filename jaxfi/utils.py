@@ -129,7 +129,10 @@ def _make_jax_array(arr_value, device):
 
 
 def _pickle_array(arr: Array):
-    return _make_jax_array, (np.array(arr), arr.devices())
+    devices = tuple(arr.devices())
+    if len(devices) > 1:
+        raise NotImplementedError("jaxfi does not support pickling sharded arrays")
+    return _make_jax_array, (np.array(arr), devices[0])
 
 
 def _enable_pickling_fixes():

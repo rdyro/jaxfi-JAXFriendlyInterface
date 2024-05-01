@@ -209,7 +209,7 @@ lax = jax.lax
 scipy = jsp
 random = jrandom
 
-_enable_pickling_fixes()
+_enable_pickling_fixes() # not currently in use
 
 ####################################################################################################
 globals.jaxm = sys.modules[__name__]
