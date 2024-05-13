@@ -5,7 +5,7 @@ import toml
 config = toml.loads((Path(__file__).parent / "pyproject.toml").read_text())
 
 setup(
-    name="jaxfi",
+    name=config["project"]["name"],
     version=config["project"]["version"],
     author="Robert Dyro",
     description="Simplified and user friendly interface to JAX, that behaves like PyTorch.",
