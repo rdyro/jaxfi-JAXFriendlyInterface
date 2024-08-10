@@ -1,4 +1,6 @@
+import ast
 import hashlib
+import functools
 import os
 import pickle
 import sys
@@ -10,8 +12,7 @@ from .dynamic_lib_loading import load_cuda_libs
 
 # Load OS-preferred CUDA libraries, often the ones from /usr/local/cuda ########
 # unless the user decides against this #########################################
-bool_map = {"0": False, "1": True, "true": True, "false": False}
-if bool_map.get(os.environ.get("JAXFI_LOAD_SYSTEM_CUDA_LIBS", "0").lower(), False):
+if bool(ast.literal_eval(os.environ.get("JAXFI_LOAD_SYSTEM_CUDA_LIBS", "0"))):
     msg = (
         "\nWe are manually loading OS preferred CUDA libraries. "
         + "This should allow JAX to work alongside PyTorch "
@@ -96,6 +97,7 @@ globals.key = key
 
 
 def device_dtype_fn(fn, without_dtype=False, check_second_arg_for_dtype=False):
+    @functools.wraps(fn)
     def fn_(*args, **kw):
         device = resolve_device(kw.get("device", None))
         if "device" in kw:
@@ -121,6 +123,7 @@ logspace = device_dtype_fn(jnp.logspace)
 
 
 def random_fn(fn, first_arg_to_tuple=False, default_dtype=None):
+    @functools.wraps(fn)
     def jaxm_fn(*args, **kw):
         if "key" in kw and kw["key"] is None:
             kw = {k: v for (k, v) in kw.items() if k != "key"}
@@ -132,9 +135,6 @@ def random_fn(fn, first_arg_to_tuple=False, default_dtype=None):
             if not isinstance(key2, jax.interpreters.partial_eval.DynamicJaxprTracer):
                 globals.key = key2
         # set correct device and dtype
-        key1, key2 = jrandom.split(globals.key)
-        # under_jit = isinstance(key2, jax.interpreters.partial_eval.DynamicJaxprTracer)
-        # default_device = None if under_jit else get_default_device()
         default_device = None
         device = resolve_device(kw.get("device", default_device))
         if "device" in kw:

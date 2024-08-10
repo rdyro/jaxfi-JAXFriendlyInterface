@@ -55,7 +55,7 @@ jaxm.set_default_device("gpu")
 jaxm.get_default_device()
 jaxm.get_default_dtype()
 ```
-**Default `dtype` refers to CPU default dtype, default GPU dtype is always `float32`, but `float64` arrays can be created on the GPU by specifying the *dtype explicitly or by using `jaxm.to`.**
+**Default `dtype` refers to CPU default dtype, default GPU dtype is always `float32`, but `float64` arrays can be created on the GPU by specifying the `dtype` explicitly or by using `jaxm.to`.**
 
 `jaxm` behaves like numpy (jax.numpy). Some methods are
 patched directly from jax.
@@ -142,6 +142,9 @@ This will instruct `jaxfi` to dynamically load the system CUDA libraries.
 
 
 # Changelog
+
+- version 0.7.3
+  - fixed random functions not accepting `key=` kwargs for under-jit random number generation
 
 - version 0.7.0
   - `jaxfi` is now identical with `jaxm` so that both `import jaxfi as jaxm` and `from jaxfi import jaxm` work
